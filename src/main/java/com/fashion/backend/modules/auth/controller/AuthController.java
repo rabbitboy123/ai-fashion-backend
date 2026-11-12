@@ -1,10 +1,10 @@
 package com.fashion.backend.modules.auth.controller;
 
 import com.fashion.backend.common.api.ApiResponse;
-import com.fashion.backend.modules.auth.dto.AuthResponse;
-import com.fashion.backend.modules.auth.dto.LoginRequest;
-import com.fashion.backend.modules.auth.dto.RegisterRequest;
-import com.fashion.backend.modules.auth.dto.UserResponse;
+import com.fashion.backend.modules.auth.dto.response.AuthResponse;
+import com.fashion.backend.modules.auth.dto.request.LoginRequest;
+import com.fashion.backend.modules.auth.dto.request.RegisterRequest;
+import com.fashion.backend.modules.user.dto.response.UserResponse;
 import com.fashion.backend.modules.auth.service.AuthService;
 import com.fashion.backend.security.UserPrincipal;
 import jakarta.validation.Valid;

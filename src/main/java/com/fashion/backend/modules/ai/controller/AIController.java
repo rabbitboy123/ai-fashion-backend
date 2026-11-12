@@ -38,6 +38,7 @@ public class AIController {
      * Lấy lịch sử tư vấn phối đồ của người dùng hiện tại (yêu cầu đăng nhập)
      */
     @GetMapping("/history")
+
     public ResponseEntity<ApiResponse<List<AIRecommendResponse>>> getHistory(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {

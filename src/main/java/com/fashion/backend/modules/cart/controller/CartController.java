@@ -7,14 +7,17 @@ import com.fashion.backend.modules.cart.dto.response.CartResponse;
 import com.fashion.backend.modules.cart.service.CartService;
 import com.fashion.backend.security.UserPrincipal;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
+@Validated
 public class CartController {
 
     private final CartService cartService;
@@ -36,7 +39,7 @@ public class CartController {
     @PutMapping("/items/{id}")
     public ResponseEntity<ApiResponse<CartResponse>> updateCartItem(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @Valid @RequestBody UpdateCartItemRequest request) {
         CartResponse response = cartService.updateCartItem(userPrincipal.getId(), id, request);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật giỏ hàng thành công", response));
@@ -45,7 +48,7 @@ public class CartController {
     @DeleteMapping("/items/{id}")
     public ResponseEntity<ApiResponse<CartResponse>> removeCartItem(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @PathVariable Long id) {
+            @PathVariable @Positive Long id) {
         CartResponse response = cartService.removeCartItem(userPrincipal.getId(), id);
         return ResponseEntity.ok(ApiResponse.success("Xóa sản phẩm khỏi giỏ hàng thành công", response));
     }

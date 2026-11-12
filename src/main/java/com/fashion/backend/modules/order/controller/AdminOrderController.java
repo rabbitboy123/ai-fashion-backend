@@ -5,10 +5,12 @@ import com.fashion.backend.modules.order.dto.request.UpdateOrderStatusRequest;
 import com.fashion.backend.modules.order.dto.response.OrderResponse;
 import com.fashion.backend.modules.order.service.OrderService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
@@ -16,6 +18,7 @@ import java.util.List;
 @RequestMapping("/api/admin/orders")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Validated
 public class AdminOrderController {
 
     private final OrderService orderService;
@@ -28,7 +31,7 @@ public class AdminOrderController {
 
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @Valid @RequestBody UpdateOrderStatusRequest request) {
         OrderResponse response = orderService.updateOrderStatus(id, request.getStatus());
         return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái đơn hàng thành công", response));

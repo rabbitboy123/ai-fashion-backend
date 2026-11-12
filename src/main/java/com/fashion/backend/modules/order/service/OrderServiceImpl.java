@@ -2,6 +2,7 @@ package com.fashion.backend.modules.order.service;
 
 import com.fashion.backend.common.constant.OrderStatus;
 import com.fashion.backend.common.constant.PaymentMethod;
+import com.fashion.backend.common.constant.PaymentStatus;
 import com.fashion.backend.common.exception.BadRequestException;
 import com.fashion.backend.common.exception.ResourceNotFoundException;
 import com.fashion.backend.modules.cart.entity.Cart;
@@ -13,6 +14,7 @@ import com.fashion.backend.modules.order.dto.response.OrderItemResponse;
 import com.fashion.backend.modules.order.dto.response.OrderResponse;
 import com.fashion.backend.modules.order.entity.Order;
 import com.fashion.backend.modules.order.entity.OrderItem;
+import com.fashion.backend.modules.order.entity.Payment;
 import com.fashion.backend.modules.order.repository.OrderItemRepository;
 import com.fashion.backend.modules.order.repository.OrderRepository;
 import com.fashion.backend.modules.product.entity.ProductVariant;
@@ -41,6 +43,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository productVariantRepository;
     private final UserRepository userRepository;
+    private final BankPaymentService bankPaymentService;
 
     @Override
     public OrderResponse createOrder(Long userId, CreateOrderRequest request) {
@@ -59,7 +62,9 @@ public class OrderServiceImpl implements OrderService {
         List<CartItem> itemsToProcess = new ArrayList<>(cart.getItems());
 
         for (CartItem item : itemsToProcess) {
-            ProductVariant variant = item.getProductVariant();
+            ProductVariant variant = productVariantRepository.findByIdForUpdate(item.getProductVariant().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy biến thể sản phẩm."));
+            item.setProductVariant(variant);
             if (variant.getStockQuantity() < item.getQuantity()) {
                 throw new BadRequestException("Tác phẩm '" + variant.getProduct().getName() +
                         "' (Size: " + variant.getSize().getName() + ", Màu: " + variant.getColor().getName() +
@@ -88,6 +93,10 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         Order savedOrder = orderRepository.save(order);
+
+        if (savedOrder.getPaymentMethod() == PaymentMethod.BANK_TRANSFER) {
+            bankPaymentService.createPayment(savedOrder);
+        }
 
         // 3. Snapshot dữ liệu vào từng OrderItem
         List<OrderItem> orderItems = new ArrayList<>();
@@ -159,6 +168,18 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng với ID: " + orderId));
 
+        if (order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER
+                && status != OrderStatus.CANCELLED) {
+            Payment payment = bankPaymentService.findForOrder(orderId);
+            if (payment == null || payment.getStatus() != PaymentStatus.PAID) {
+                throw new BadRequestException("Chỉ được cập nhật trạng thái giao hàng sau khi đã xác nhận thanh toán.");
+            }
+        }
+
+        if (order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER && status == OrderStatus.CANCELLED) {
+            bankPaymentService.cancelPendingPayment(orderId);
+        }
+
         order.setStatus(status);
         Order updated = orderRepository.save(order);
         log.info("Cập nhật trạng thái đơn hàng #{}: {}", orderId, status);
@@ -191,6 +212,8 @@ public class OrderServiceImpl implements OrderService {
         }
 
         String orderCode = String.format("#BESPOKE-%06d", order.getId());
+        Payment payment = order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER
+                ? bankPaymentService.findForOrder(order.getId()) : null;
 
         return OrderResponse.builder()
                 .id(order.getId())
@@ -198,6 +221,11 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(payment == null ? null : payment.getStatus())
+                .paymentReference(payment == null ? null : payment.getPaymentReference())
+                .paymentExpiresAt(payment == null ? null : payment.getExpiresAt())
+                .paymentQrUrl(payment == null || payment.getStatus() != PaymentStatus.PENDING
+                        ? null : bankPaymentService.createQrUrl(payment))
                 .receiverName(order.getReceiverName())
                 .receiverPhone(order.getReceiverPhone())
                 .shippingAddress(order.getShippingAddress())

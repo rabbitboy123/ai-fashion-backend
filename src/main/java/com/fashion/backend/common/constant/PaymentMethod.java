@@ -1,5 +1,6 @@
 package com.fashion.backend.common.constant;
 
 public enum PaymentMethod {
-    COD
+    COD,
+    BANK_TRANSFER
 }

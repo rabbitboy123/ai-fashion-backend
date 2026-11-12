@@ -9,10 +9,12 @@ import com.fashion.backend.modules.product.dto.response.ProductDetailResponse;
 import com.fashion.backend.modules.product.dto.response.ProductVariantResponse;
 import com.fashion.backend.modules.product.service.ProductService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.List;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Validated
+
 public class AdminProductController {
 
     private final ProductService productService;
@@ -41,21 +45,21 @@ public class AdminProductController {
 
     @PutMapping("/products/{id}")
     public ResponseEntity<ApiResponse<ProductDetailResponse>> updateProduct(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @Valid @RequestBody AdminUpdateProductRequest request) {
         ProductDetailResponse response = productService.updateProduct(id, request);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật thông tin tác phẩm thành công", response));
     }
 
     @DeleteMapping("/products/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable @Positive Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa tác phẩm thành công", null));
     }
 
     @PostMapping("/products/{id}/variants")
     public ResponseEntity<ApiResponse<ProductVariantResponse>> addVariant(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @Valid @RequestBody AdminCreateVariantRequest request) {
         ProductVariantResponse response = productService.addVariant(id, request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -63,14 +67,14 @@ public class AdminProductController {
     }
 
     @DeleteMapping("/variants/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteVariant(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteVariant(@PathVariable @Positive Long id) {
         productService.deleteVariant(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa biến thể thành công", null));
     }
 
     @PutMapping("/variants/{id}/stock")
     public ResponseEntity<ApiResponse<ProductVariantResponse>> updateVariantStock(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @Valid @RequestBody AdminUpdateStockRequest request) {
         ProductVariantResponse response = productService.updateVariantStock(id, request.getStockQuantity());
         return ResponseEntity.ok(ApiResponse.success("Cập nhật tồn kho thành công", response));

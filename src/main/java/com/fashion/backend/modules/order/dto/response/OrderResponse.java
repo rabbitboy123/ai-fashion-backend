@@ -2,6 +2,7 @@ package com.fashion.backend.modules.order.dto.response;
 
 import com.fashion.backend.common.constant.OrderStatus;
 import com.fashion.backend.common.constant.PaymentMethod;
+import com.fashion.backend.common.constant.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +24,10 @@ public class OrderResponse {
     private BigDecimal totalAmount;
     private OrderStatus status;
     private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
+    private String paymentReference;
+    private LocalDateTime paymentExpiresAt;
+    private String paymentQrUrl;
     private String receiverName;
     private String receiverPhone;
     private String shippingAddress;

@@ -7,17 +7,20 @@ import com.fashion.backend.modules.order.dto.response.OrderResponse;
 import com.fashion.backend.modules.order.service.OrderService;
 import com.fashion.backend.security.UserPrincipal;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
+@Validated
 public class OrderController {
 
     private final OrderService orderService;
@@ -41,7 +44,7 @@ public class OrderController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<OrderResponse>> getOrderById(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @PathVariable Long id) {
+            @PathVariable @Positive Long id) {
         boolean isAdmin = userPrincipal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(RoleType.ROLE_ADMIN.name()));
         OrderResponse response = orderService.getOrderById(userPrincipal.getId(), id, isAdmin);

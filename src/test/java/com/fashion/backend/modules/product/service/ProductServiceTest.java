@@ -53,7 +53,7 @@ class ProductServiceTest {
     private ProductVariantRepository productVariantRepository;
 
     @InjectMocks
-    private ProductService productService;
+    private ProductServiceImpl productService;
 
     private Category sampleCategory;
     private Size sampleSize;

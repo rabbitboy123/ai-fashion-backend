@@ -47,7 +47,11 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/register", "/api/auth/login",
+                                "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
+                        .requestMatchers("/api/payments/webhooks/sepay").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info",
+                                "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**", "/api/products/**").permitAll()
                         .requestMatchers("/api/ai/recommend").permitAll()
                         .requestMatchers("/error", "/favicon.ico").permitAll()
