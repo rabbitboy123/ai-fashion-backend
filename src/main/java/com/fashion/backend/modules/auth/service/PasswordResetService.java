@@ -77,8 +77,11 @@ public class PasswordResetService {
             mailSender.send(message);
         } catch (MailException ex) {
             record.setExpiresAt(now);
+            // Do not lock the user out of retrying if the SMTP server is temporarily unavailable.
+            record.setLastSentAt(now.minusSeconds(resendCooldownSeconds));
             resetCodeRepository.save(record);
-            log.warn("Password reset email delivery failed for user id {}", user.getId());
+            log.warn("Password reset email delivery failed for user id {}: {}",
+                    user.getId(), ex.getClass().getSimpleName());
         }
     }
 

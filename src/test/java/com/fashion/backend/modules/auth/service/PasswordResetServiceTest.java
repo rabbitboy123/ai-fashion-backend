@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -77,6 +78,23 @@ class PasswordResetServiceTest {
 
         verify(mailSender, never()).send(any(SimpleMailMessage.class));
         verify(resetCodeRepository, never()).save(any(PasswordResetCode.class));
+    }
+
+    @Test
+    void requestCodeExpiresCodeAndAllowsRetryWhenEmailDeliveryFails() {
+        when(userRepository.findByEmailForUpdate("user@example.test")).thenReturn(Optional.of(user));
+        when(resetCodeRepository.findByUserIdForUpdate(7L)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any())).thenReturn("encoded-code");
+        doThrow(new MailSendException("SMTP unavailable")).when(mailSender).send(any(SimpleMailMessage.class));
+
+        service.requestCode(new ForgotPasswordRequest("user@example.test"));
+
+        ArgumentCaptor<PasswordResetCode> codeCaptor = ArgumentCaptor.forClass(PasswordResetCode.class);
+        verify(resetCodeRepository, times(2)).save(codeCaptor.capture());
+        PasswordResetCode failedDeliveryCode = codeCaptor.getAllValues().get(1);
+        LocalDateTime now = LocalDateTime.now();
+        assertFalse(failedDeliveryCode.getExpiresAt().isAfter(now));
+        assertFalse(failedDeliveryCode.getLastSentAt().plusSeconds(60).isAfter(now));
     }
 
     @Test
